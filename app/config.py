@@ -22,6 +22,8 @@ class Settings(BaseSettings):
     JWT_SECRET: str = "secret"
     JWT_ALGORITHM: str = "HS256"
 
+    DISABLE_AUTH: bool = False
+
     class Config:
         env_file = ".env"
 
