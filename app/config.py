@@ -17,6 +17,8 @@ class Settings(BaseSettings):
     KAFKA_TOPIC_PARTICIPANT_INVITED: str = "trip.participant.invited"
     KAFKA_TOPIC_TRIP_ORGANIZER_ASSIGNED: str = "trip.organizer.assigned"
     KAFKA_TOPIC_TRIP_CANCELLED: str = "trip.cancelled"
+    KAFKA_TOPIC_TRIP_ROUTE_UPDATED: str = "trip.route.updated"
+    KAFKA_TOPIC_TRIP_PARTICIPANT_LEFT: str = "trip.participant.left"
 
     # JWT
     JWT_SECRET: str = "secret"

@@ -4,9 +4,10 @@ from datetime import datetime
 from typing import Optional
 
 from sqlalchemy import (
-    String, Text, DateTime, ForeignKey, Enum as SAEnum, Boolean
+    String, Text, DateTime, ForeignKey, Enum as SAEnum, Boolean,
+    Integer, Float, Index,
 )
-from sqlalchemy.dialects.postgresql import UUID
+from sqlalchemy.dialects.postgresql import UUID, JSONB
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy.sql import func
 
@@ -14,8 +15,9 @@ from app.db.database import Base
 
 
 class TripStatus(str, enum.Enum):
-    PLANNED = "PLANNED"
-    ACTIVE = "ACTIVE"
+    DRAFT = "DRAFT"
+    PLANNED = "PLANNED"        # formerly the only pre-start state
+    ACTIVE = "ACTIVE"          # trip is ongoing
     COMPLETED = "COMPLETED"
     CANCELLED = "CANCELLED"
 
@@ -34,14 +36,20 @@ class Trip(Base):
     )
     name: Mapped[str] = mapped_column(String(255), nullable=False)
     description: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
-    area_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), nullable=False)
+
     organizer_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), nullable=False)
+
     status: Mapped[TripStatus] = mapped_column(
-        SAEnum(TripStatus), default=TripStatus.PLANNED, nullable=False
+        SAEnum(TripStatus), default=TripStatus.DRAFT, nullable=False
     )
+
     start_date: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
     end_date: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
-    max_participants: Mapped[Optional[int]] = mapped_column(nullable=True)
+
+    # Ordered list of {lat, lng, label?} objects stored as JSONB.
+    # Each element: {"lat": float, "lng": float, "label": str | null, "order": int}
+    route: Mapped[list] = mapped_column(JSONB, nullable=False, default=list)
+
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), nullable=False
     )
