@@ -60,13 +60,8 @@ class TripService:
     # ── Trip lifecycle ────────────────────────────────────────────────────────
 
     async def create_trip(
-        self, data: TripCreate, organizer_id: uuid.UUID
+        self, data: TripCreate, organizer_id: uuid.UUID, organizer_email: str
     ) -> Trip:
-        """
-        Creates a new trip in DRAFT status. The organizer is automatically
-        added as an accepted participant.
-        Emits: TripOrganizerAssigned
-        """
         route_data = [point.model_dump() for point in data.route]
 
         trip = Trip(
@@ -84,6 +79,7 @@ class TripService:
         organizer_participant = TripParticipant(
             trip_id=trip.id,
             tourist_id=organizer_id,
+            email=organizer_email, # Set organizer email
             status=ParticipantStatus.ACCEPTED,
             is_organizer=True,
             joined_at=datetime.now(timezone.utc),
@@ -95,6 +91,7 @@ class TripService:
         await publish_event(
             topic=settings.KAFKA_TOPIC_TRIP_ORGANIZER_ASSIGNED,
             event_type="TripOrganizerAssigned",
+            user_email=organizer_email, # Pass to root context
             payload={
                 "trip_id": str(trip.id),
                 "trip_name": trip.name,
@@ -164,12 +161,8 @@ class TripService:
         return trip
 
     async def cancel_trip(
-        self, trip_id: uuid.UUID, requester_id: uuid.UUID
+            self, trip_id: uuid.UUID, requester_id: uuid.UUID
     ) -> Trip:
-        """
-        Cancels a trip. Only the organizer may cancel.
-        Emits: TripCancelled
-        """
         trip = await self.get_trip_by_id(trip_id)
         self._assert_organizer(trip, requester_id)
         self._assert_not_cancelled(trip)
@@ -178,6 +171,7 @@ class TripService:
         await self.session.commit()
         await self.session.refresh(trip)
 
+        # Gather list of participant dicts/objects containing emails
         await publish_event(
             topic=settings.KAFKA_TOPIC_TRIP_CANCELLED,
             event_type="TripCancelled",
@@ -185,7 +179,10 @@ class TripService:
                 "trip_id": str(trip.id),
                 "trip_name": trip.name,
                 "organizer_id": str(trip.organizer_id),
-                "participant_ids": [str(p.tourist_id) for p in trip.participants],
+                "participants": [
+                    {"tourist_id": str(p.tourist_id), "email": p.email}
+                    for p in trip.participants
+                ],
             },
         )
 
@@ -228,16 +225,11 @@ class TripService:
     # ── Participant management ────────────────────────────────────────────────
 
     async def invite_participant(
-        self,
-        trip_id: uuid.UUID,
-        data: InviteParticipant,
-        requester_id: uuid.UUID,
+            self,
+            trip_id: uuid.UUID,
+            data: InviteParticipant,
+            requester_id: uuid.UUID,
     ) -> TripParticipant:
-        """
-        Invites a tourist to the trip. Only the organizer may invite.
-        Allowed in DRAFT or ACTIVE status.
-        Emits: ParticipantInvited
-        """
         trip = await self.get_trip_by_id(trip_id)
         self._assert_organizer(trip, requester_id)
         self._assert_modifiable(trip)
@@ -251,6 +243,7 @@ class TripService:
         participant = TripParticipant(
             trip_id=trip_id,
             tourist_id=data.tourist_id,
+            email=data.email,  # Set from endpoint payload data input
             status=ParticipantStatus.INVITED,
             is_organizer=False,
         )
@@ -261,6 +254,7 @@ class TripService:
         await publish_event(
             topic=settings.KAFKA_TOPIC_PARTICIPANT_INVITED,
             event_type="ParticipantInvited",
+            user_email=data.email,  # Target endpoint notification email
             payload={
                 "trip_id": str(trip_id),
                 "trip_name": trip.name,

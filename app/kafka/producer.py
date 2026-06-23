@@ -28,10 +28,11 @@ async def stop_producer():
         _producer = None
 
 
-async def publish_event(topic: str, event_type: str, payload: dict):
+async def publish_event(topic: str, event_type: str, payload: dict, user_email: Optional[str] = None):
     producer = await get_producer()
     message = {
         "event_type": event_type,
+        "user_email": user_email,
         "payload": payload,
         "occurred_at": datetime.now(timezone.utc).isoformat(),
         "event_id": str(uuid.uuid4()),

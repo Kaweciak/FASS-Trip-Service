@@ -62,6 +62,9 @@ class Trip(Base):
     )
 
 
+from sqlalchemy import String  # Ensure String is imported
+
+
 class TripParticipant(Base):
     __tablename__ = "trip_participants"
 
@@ -72,6 +75,10 @@ class TripParticipant(Base):
         UUID(as_uuid=True), ForeignKey("trips.id", ondelete="CASCADE"), nullable=False
     )
     tourist_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), nullable=False)
+
+    # NEW FIELD Added
+    email: Mapped[str] = mapped_column(String(255), nullable=False)
+
     status: Mapped[ParticipantStatus] = mapped_column(
         SAEnum(ParticipantStatus), default=ParticipantStatus.INVITED, nullable=False
     )
