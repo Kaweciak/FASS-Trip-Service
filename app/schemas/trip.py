@@ -2,7 +2,7 @@ import uuid
 from datetime import datetime
 from typing import Optional
 
-from pydantic import BaseModel, Field, EmailStr
+from pydantic import BaseModel, Field
 
 from app.models.trip import TripStatus, ParticipantStatus
 
@@ -50,7 +50,7 @@ class PatchTripRoute(BaseModel):
 
 class InviteParticipant(BaseModel):
     tourist_id: uuid.UUID
-    email: EmailStr
+    email: str
 
 
 class ParticipantStatusUpdate(BaseModel):
