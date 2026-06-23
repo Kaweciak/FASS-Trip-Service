@@ -31,6 +31,8 @@ app = FastAPI(
 
 app.include_router(trips.router)
 
+app.router.redirect_slashes = False
+
 
 @app.get("/health")
 async def health():
