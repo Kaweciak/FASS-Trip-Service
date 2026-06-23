@@ -60,7 +60,7 @@ class TripService:
     # ── Trip lifecycle ────────────────────────────────────────────────────────
 
     async def create_trip(
-        self, data: TripCreate, organizer_id: uuid.UUID, organizer_email: str
+            self, data: TripCreate, organizer_id: uuid.UUID
     ) -> Trip:
         route_data = [point.model_dump() for point in data.route]
 
@@ -79,7 +79,7 @@ class TripService:
         organizer_participant = TripParticipant(
             trip_id=trip.id,
             tourist_id=organizer_id,
-            email=organizer_email, # Set organizer email
+            email=data.organizer_email,
             status=ParticipantStatus.ACCEPTED,
             is_organizer=True,
             joined_at=datetime.now(timezone.utc),
@@ -91,7 +91,7 @@ class TripService:
         await publish_event(
             topic=settings.KAFKA_TOPIC_TRIP_ORGANIZER_ASSIGNED,
             event_type="TripOrganizerAssigned",
-            user_email=organizer_email, # Pass to root context
+            user_email=data.organizer_email,
             payload={
                 "trip_id": str(trip.id),
                 "trip_name": trip.name,

@@ -26,6 +26,7 @@ class TripCreate(BaseModel):
     end_date: datetime
     # At least one coordinate is required so the trip has a meaningful location.
     route: list[RoutePoint] = Field(..., min_length=1)
+    organizer_email: str
 
 
 class PatchTripMetadata(BaseModel):
