@@ -22,7 +22,7 @@ from app.services.trip_service import (
     TripStateError,
 )
 
-router = APIRouter(prefix="/trips", tags=["trips"])
+router = APIRouter(prefix="/trips/", tags=["trips"])
 
 CurrentUser = Annotated[uuid.UUID, Depends(get_current_user_id)]
 DB = Annotated[AsyncSession, Depends(get_db)]
