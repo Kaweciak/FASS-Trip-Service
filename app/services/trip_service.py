@@ -90,7 +90,7 @@ class TripService:
         )
         self.session.add(organizer_participant)
         await self.session.commit()
-        await self.session.refresh(trip)
+        await self.session.refresh(trip, attribute_names=["participants"])
 
         await publish_event(
             topic=settings.KAFKA_TOPIC_TRIP_ORGANIZER_ASSIGNED,
